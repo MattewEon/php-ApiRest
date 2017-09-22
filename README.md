@@ -3,7 +3,18 @@
 This repository contains a little framework capable of doing a RestAPI easily with PHP
 ##### Please don't hesitate to ask for new features or report a bug on Github! Thanks
 
-# 1. Features
+# Summary
+
+- [1. Features](#1)
+- [2. How it works ?](#2)
+    - [2.1 RestAPI](#2.1)
+    - [2.2 Controllers](#2.2)
+    - [2.3 Services](#2.3)
+    - [2.4 Repositories](#2.4)
+    - [2.5 Model](#2.5)
+- [3. Future improvements](#3)
+
+# 1. <a name="1"></a>Features
 
 - RestAPI Framework
     - Model Superclass
@@ -17,9 +28,9 @@ This repository contains a little framework capable of doing a RestAPI easily wi
 - JWT Token
     - https://github.com/firebase/php-jwt
     
-# 2. How it works ?
+# 2. <a name="2"></a>How it works ?
 
-## 2.1 RestAPI
+## 2.1 <a name="2.1"></a> RestAPI
 
 To start, you'll have to create a folder (I named it `/rest`)
 and place the `ApiRest` folder inside. The main file will be `api.php` :
@@ -53,7 +64,7 @@ It's cool, but how the RestAPI handle that ?
     - Call the associated function
     - Process query(ies) and return the result
 
-## 2.2 Controllers
+## 2.2 <a name="2.2"></a> Controllers
 
 Controllers are the the first layer called by the RestAPI. They have to be
 named like this : `modelClassName + "Controller"`. By default, theses paths
@@ -106,7 +117,7 @@ var_dump($params);
 //)
 ```
 
-## 2.3 Services
+## 2.3 <a name="2.3"></a> Services
 
 Services are the next layer called by controllers : They are between Controller
 classes and Repository classes. Services are used to get data and make process
@@ -132,7 +143,7 @@ class UserService extends Service {
 }
 ```
 
-## 2.3 Repository
+## 2.4 <a name="2.4"></a> Repository
 
 Repositories are the final layer called by Services. They contains SQL
 queries and get models object from the DataBase.
@@ -171,7 +182,7 @@ class UserRepository extends Repository {
 }
 ```
 
-## 2.4 Model
+## 2.5 <a name="2.5"></a> Model
 
 Models are the classes representing a line in the DataBase. 
 
@@ -189,7 +200,7 @@ JSON call the `encode()` function !
 Model classes can be retrieved from JSON using this function :
 `fromJSON(stdClass $data)`.
 
-# 3. Future improvements
+# 3. <a name="3"></a> Future improvements
 
 In the future, I would like to add some authorizations features to allow
 requesting specific paths only if the user is logged and has the appropriate
