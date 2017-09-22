@@ -8,15 +8,15 @@ class UserRepository extends Repository {
 	}
 
 	public function login(User $user): string {
-		$stmt = Rest::$db->prepare("SELECT * FROM $this->$this->tableName WHERE name = :name AND password = :password");
-		$stmt->bindValue(':name', $user->name, self::getPdoParam($user->name));
-		$stmt->bindValue(':password', $user->password, self::getPdoParam($user->name));
-		$stmt->execute();
+		$matchedUsers = $this->getByFields(["name", "password"], $user);
 
-		$loggedUser = $stmt->fetchObject('User');
+		if (count($matchedUsers) != 1)
+			throw new Exception("UserRepository->login() : \$matchedUsers have a size of " . count($matchedUsers) . " instead of 1 !");
 
+		$loggedUser = $matchedUsers[0];
 		if ($loggedUser)
-			return Rest::IDToToken($loggedUser->id_crea);
-		else return "";
+			return Rest::IDToToken($loggedUser->id);
+		else
+			return "";
 	}
 }

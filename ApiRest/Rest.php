@@ -11,10 +11,12 @@ class Rest {
 	const PUT = "PUT";
 	const DELETE = "DELETE";
 
-	/** @var  PDO */
+	/** @var PDO */
 	public static $db;
-	/** @var  string */
+	/** @var string */
 	public static $secretKey;
+	/** @var string */
+	public static $uploadDir;
 
 	/** Check if $method is GET POST PUT DELETE
 	 *
@@ -82,5 +84,54 @@ class Rest {
 	 */
 	public static function IDToToken($id): string {
 		return JWT::encode(["id" => $id], self::$secretKey);
+	}
+
+	/** Set the uploadDir parameter
+	 *
+	 * @param string $directory
+	 */
+	public static function configureUploadDir(string $directory) {
+		Rest::$uploadDir = $directory;
+
+		if (!is_dir(Rest::getUploadDir()))
+			Rest::createDirectoryRecursive(Rest::$uploadDir);
+	}
+
+	/** Create a Directory Recursively
+	 *
+	 * @param string $directory
+	 */
+	public static function createDirectoryRecursive(string $directory) {
+		$dir = __DIR__ . "/../..";
+		foreach (explode("/", $directory) as $folder) {
+			$dir .= "/" . $folder;
+			if (!is_dir($dir))
+				mkdir($dir);
+		}
+	}
+
+	/** Get the upload directory path
+	 *
+	 * @return string
+	 */
+	public static function getUploadDir() {
+		return __DIR__ . "/../../" . Rest::$uploadDir;
+	}
+
+	/** Upload a file to the uploadDir
+	 *
+	 * @param string $fileName
+	 * @param string $newFileName
+	 * @return bool
+	 * @throws Exception if file don't exist
+	 */
+	public static function uploadFile(string $fileName, string $newFileName): bool {
+		if (!isset($_FILES[$fileName]))
+			throw new Exception("File $fileName is not present in \$_FILES (" . join(", ", array_keys($_FILES)) . ")");
+
+		$file = $_FILES[$fileName];
+		$tmp_name = $file["tmp_name"][0];
+
+		return move_uploaded_file($tmp_name, Rest::getUploadDir() . "/" . $newFileName);
 	}
 }

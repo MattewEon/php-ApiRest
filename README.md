@@ -3,6 +3,7 @@
 This repository contains a little framework capable of doing a RestAPI easily with PHP
 ##### Please don't hesitate to ask for new features or report a bug on Github! Thanks
 
+
 # Summary
 
 - [1. Features](#1)
@@ -13,6 +14,16 @@ This repository contains a little framework capable of doing a RestAPI easily wi
     - [2.4 Repositories](#2.4)
     - [2.5 Model](#2.5)
 - [3. Future improvements](#3)
+
+# Updates
+
+- 22 Sept. 2017
+    - Added `Controller->getByFields` functions
+    - Added `Rest::uploadFile` function
+        - Added `Rest::$uploadDir`
+        - Added `Rest::getUploadDir()`
+        - Added `Rest::configureUploadDir()`
+        - Added `Rest::createDirectoryRecursive()`
 
 # 1. <a name="1"></a>Features
 
@@ -27,6 +38,7 @@ This repository contains a little framework capable of doing a RestAPI easily wi
         - Get the data from the DB
 - JWT Token
     - https://github.com/firebase/php-jwt
+- File transfer
     
 # 2. <a name="2"></a>How it works ?
 
@@ -93,12 +105,21 @@ class UserController extends Controller {
 		parent::__construct($modelName);
 
 		$this->createApiRoute(Rest::PUT, 'login', "login");
+
+		$this->createApiRoute(Rest::POST, 'picture', "uploadPicture");
 	}
 
 	/* PUT */
 	public static function login(array $params, stdClass $body): string {
 		$user = User::fromJSON($body);
 		return static::$service->login($user);
+	}
+
+	public static function uploadPicture(): string {
+		$fileName = "htmlInputName";
+		$newName = "profilePicture.png";
+		Rest::uploadFile($fileName, $newName);
+		return "";
 	}
 }
 ```
@@ -168,16 +189,16 @@ class UserRepository extends Repository {
 	}
 
 	public function login(User $user): string {
-		$stmt = Rest::$db->prepare("SELECT * FROM $this->$this->tableName WHERE name = :name AND password = :password");
-		$stmt->bindValue(':name', $user->name, self::getPdoParam($user->name));
-		$stmt->bindValue(':password', $user->password, self::getPdoParam($user->password));
-		$stmt->execute();
+		$matchedUsers = $this->getByFields(["name", "password"], $user);
 
-		$loggedUser = $stmt->fetchObject('User');
+		if (count($matchedUsers) != 1)
+			throw new Exception("UserRepository->login() : \$matchedUsers have a size of " . count($matchedUsers) . " instead of 1 !");
 
+		$loggedUser = $matchedUsers[0];
 		if ($loggedUser)
-			return Rest::IDToToken($loggedUser->id_crea);
-		else return "";
+			return Rest::IDToToken($loggedUser->id);
+		else
+			return "";
 	}
 }
 ```
@@ -197,8 +218,8 @@ On the same way, you can mark a field as jsonIgnore by calling the function
 `addIgnore("ignoredField1", ...)`. Then, to convert Model's instances to
 JSON call the `encode()` function !
 
-Model classes can be retrieved from JSON using this function :
-`fromJSON(stdClass $data)`.
+Model classes can be retrieved from JSON using this static function :
+`Model::fromJSON(stdClass $data)`.
 
 # 3. <a name="3"></a> Future improvements
 

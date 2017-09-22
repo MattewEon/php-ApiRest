@@ -82,6 +82,21 @@ class Repository {
 		return "SELECT * FROM $this->tableName WHERE $field = :$field";
 	}
 
+	/** Get the GetByFields query
+	 *
+	 * @param array <string> $fields
+	 * @return string
+	 */
+
+	public function getGetByFieldsQuery(array $fields): string {
+		$fieldsStrArray = [];
+		foreach ($fields as $field)
+			$fieldsStrArray[] = "$field = :$field";
+		$fieldsStr = join(" AND ", $fieldsStrArray);
+
+		return "SELECT * FROM $this->tableName WHERE $fieldsStr";
+	}
+
 	/** Get the Create query
 	 *
 	 * @return string
@@ -187,6 +202,30 @@ class Repository {
 		$model->preserveBooleans();
 
 		return $model;
+	}
+
+	/** Get a single line by ID
+	 *
+	 * @param array $fields
+	 * @param Model $search
+	 * @return array<Model>
+	 */
+	public function getByFields(array $fields, Model $search): array {
+		$stmt = Rest::$db->prepare($this->getGetByFieldsQuery($fields));
+		foreach ($fields as $field) {
+			$value = $search->{$field};
+			$stmt->bindValue(":$field", $value, self::getPdoParam($value));
+		}
+		$stmt->execute();
+
+		$modelArray = [];
+		foreach ($stmt->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row)
+			$modelArray[] = $row;
+
+		foreach ($modelArray as $model)
+			$model->preserveBooleans();
+
+		return $modelArray;
 	}
 
 	/** Create a model
