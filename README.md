@@ -137,6 +137,13 @@ class UserService extends Service {
 Repositories are the final layer called by Services. They contains SQL
 queries and get models object from the DataBase.
 
+Same as Services, by default theses functions are available : 
+- `getAll()`
+- `getByID(string $id)`
+- `create()`
+- `update()`
+- `delete(string $id)`
+
 Here is an example of UserRepository class :
 ```php
 <?php
@@ -152,7 +159,7 @@ class UserRepository extends Repository {
 	public function login(User $user): string {
 		$stmt = Rest::$db->prepare("SELECT * FROM $this->$this->tableName WHERE name = :name AND password = :password");
 		$stmt->bindValue(':name', $user->name, self::getPdoParam($user->name));
-		$stmt->bindValue(':password', $user->password, self::getPdoParam($user->name));
+		$stmt->bindValue(':password', $user->password, self::getPdoParam($user->password));
 		$stmt->execute();
 
 		$loggedUser = $stmt->fetchObject('User');
