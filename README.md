@@ -25,6 +25,12 @@ This repository contains a little framework capable of doing a RestAPI easily wi
         - Added `Rest::getUploadDir()`
         - Added `Rest::configureUploadDir()`
         - Added `Rest::createDirectoryRecursive()`
+- 22 Oct. 2017
+    - Added `Guards` feature
+        - Added `Role` Enumeration
+    - Added `KeyValue` and `KeyValueList` structure class
+        - Updated `Service` and `Repository` classes
+    - Added `Credentials` class
 
 # 1. <a name="1"></a>Features
 
