@@ -11,6 +11,8 @@ require_once __DIR__ . "/Controller.php";
 class RestAPI {
 
 	/** RestAPI constructor
+	 */
+	/** RestAPI constructor
 	 *
 	 * @param string      $host
 	 * @param string      $dbName

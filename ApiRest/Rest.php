@@ -16,7 +16,7 @@ class Rest {
 	/** @var string */
 	public static $secretKey;
 	/** @var string */
-	public static $uploadDir;
+	public static $uploadDir = "rest/uploads";
 
 	/** Check if $method is GET POST PUT DELETE
 	 *
@@ -41,20 +41,21 @@ class Rest {
 
 	/** Get the current User's id
 	 *
-	 * @return string
+	 * @return Credentials
 	 */
-	public static function getTokenID(): string {
+	public static function getTokenID() {
 		return self::tokenToID(self::getToken());
 	}
 
 	/** Get the id contained by the Token
 	 *
 	 * @param string $token
-	 * @return mixed
+	 * @return Credentials
 	 */
-	public static function tokenToID(string $token) {
+	public static function tokenToID(string $token): Credentials {
 		$tokenArray = JWT::decode($token, self::$secretKey);
-		return $tokenArray->id;
+
+		return new Credentials($tokenArray->id, $tokenArray->role);
 	}
 
 	/** Get the token send via HTTP headers
@@ -79,11 +80,11 @@ class Rest {
 
 	/** Encode id to get the Token
 	 *
-	 * @param $id
+	 * @param $credentials Credentials
 	 * @return string token
 	 */
-	public static function IDToToken($id): string {
-		return JWT::encode(["id" => $id], self::$secretKey);
+	public static function IDToToken(Credentials $credentials): string {
+		return JWT::encode($credentials, self::$secretKey);
 	}
 
 	/** Set the uploadDir parameter

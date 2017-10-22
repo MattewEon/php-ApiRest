@@ -8,7 +8,12 @@ class UserRepository extends Repository {
 	}
 
 	public function login(User $user): string {
-		$matchedUsers = $this->getByFields(["name", "password"], $user);
+		$fields = new KeyValueList([
+			new KeyValue("name", $user->name),
+			new KeyValue("password", $user->password)
+		]);
+
+		$matchedUsers = $this->getByFields($fields);
 
 		if (count($matchedUsers) != 1)
 			throw new Exception("UserRepository->login() : \$matchedUsers have a size of " . count($matchedUsers) . " instead of 1 !");

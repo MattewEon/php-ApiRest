@@ -7,19 +7,23 @@ require_once __DIR__ . "/ApiUrl.php";
  */
 class ApiRoute {
 	/** @var ApiUrl */
-	private $route;
+	public $route;
 	/** @var callable */
-	private $func;
+	public $func;
+	/** @var Guard[] */
+	public $guards;
 
 	/** ApiRoute constructor
 	 *
 	 * @param string   $method
 	 * @param string   $url
 	 * @param callable $func
+	 * @param Guard[]  $guards
 	 */
-	public function __construct(string $method, string $url, callable $func) {
+	public function __construct(string $method, string $url, callable $func, array $guards = []) {
 		$this->route = new ApiUrl($method, $url);
 		$this->func = $func;
+		$this->guards = $guards;
 	}
 
 	/** Check if it match with an ApiUrl
@@ -31,9 +35,20 @@ class ApiRoute {
 		return $this->route->match($requestUrl);
 	}
 
+	/** Check all guards and throw an Exception if access is not authorized
+	 *
+	 * @throws Exception
+	 */
+	public function checkGuards() {
+		foreach ($this->guards as $guard) {
+			if (!$guard->authorizeAccess())
+				throw new Exception("Guard " . get_class($guard) . " refused the access");
+		}
+	}
+
 	/** Call the associate function with the parameters
 	 *
-	 * @param ApiUrl $requestUrl
+	 * @param ApiUrl   $requestUrl
 	 * @param stdClass $body
 	 * @return mixed
 	 */

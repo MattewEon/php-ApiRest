@@ -16,30 +16,44 @@ class Repository {
 	/** @var string PHP Model's classname */
 	public $modelName;
 
+
 	/** TableHandler constructor
 	 *
 	 * @param string $tableName
 	 * @param string $modelName
+	 *
 	 * @throws Exception if modelName don't extend Model
 	 */
 	public function __construct(string $tableName, string $modelName) {
 		$model = new $modelName();
-		if (!is_subclass_of($model, "Model"))
-			throw new Exception("$modelName have to extend the abstract class Model");
+		if (!is_subclass_of($model, "Model")) throw new Exception("$modelName have to extend the abstract class Model");
 
 		$this->tableName = $tableName;
 		$this->modelName = $modelName;
 
 		$keys = [];
-		foreach ($model as $key => $value)
-			$keys[] = $key;
+		foreach ($model as $key => $value) $keys[] = $key;
 
 		$this->idKey = $keys[0];
 		unset($keys[0]);
 		$this->properties = $keys;
 	}
 
-	/*** GET STRING QUERIES ***/
+
+	/** Get a new ID
+	 *
+	 * @return int
+	 */
+	public function getNewID(): int {
+		$last = -1;
+		foreach (Rest::$db->query("SELECT $this->idKey FROM $this->tableName ORDER BY $this->idKey ASC") as $result) {
+			if ($last + 1 != $result[0]) return $last + 1;
+			$last++;
+		}
+		return $last + 1;
+	}
+
+
 	/** Get the GetAll query
 	 *
 	 * @return string
@@ -47,6 +61,21 @@ class Repository {
 	public function getGetAllQuery(): string {
 		return "SELECT * FROM $this->tableName";
 	}
+
+	/** Get all lines
+	 *
+	 * @return Model[]
+	 */
+	public function getAll(): array {
+		$modelArray = [];
+		foreach (Rest::$db->query($this->getGetAllQuery())->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row) {
+			$modelArray[] = $row;
+		}
+		foreach ($modelArray as $model) $model->preserveBooleans();
+
+		return $modelArray;
+	}
+
 
 	/** Get the GetById query
 	 *
@@ -56,15 +85,15 @@ class Repository {
 		return $this->getGetByFieldQuery($this->idKey);
 	}
 
-	/** Get a single line by $field
+	/** Get a single line by ID
 	 *
-	 * @param string $field
-	 * @param mixed  $fieldValue
+	 * @param mixed $id
+	 *
 	 * @return Model
 	 */
-	public function getByField(string $field, $fieldValue): Model {
-		$stmt = Rest::$db->prepare($this->getGetByFieldQuery($field));
-		$stmt->bindValue(":$field", $fieldValue, self::getPdoParam($fieldValue));
+	public function getByID($id): Model {
+		$stmt = Rest::$db->prepare($this->getGetByIDQuery());
+		$stmt->bindValue(":$this->idKey", $id, self::getPdoParam($id));
 		$stmt->execute();
 		$model = $stmt->fetchObject($this->modelName);
 
@@ -73,29 +102,69 @@ class Repository {
 		return $model;
 	}
 
+
 	/** Get the GetByField query
 	 *
 	 * @param string $field
+	 *
 	 * @return string
 	 */
 	public function getGetByFieldQuery(string $field): string {
 		return "SELECT * FROM $this->tableName WHERE $field = :$field";
 	}
 
+	/** Get a single line by $field
+	 *
+	 * @param KeyValue $field
+	 *
+	 * @return Model
+	 * @throws Exception
+	 */
+	public function getByField(KeyValue $field): Model {
+		$stmt = Rest::$db->prepare($this->getGetByFieldQuery($field->key));
+		$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
+		$stmt->execute();
+		$model = $stmt->fetchObject($this->modelName);
+
+		if ($model === false) throw new Exception("GetByField error");
+
+		$model->preserveBooleans();
+
+		return $model;
+	}
+
+
 	/** Get the GetByFields query
 	 *
-	 * @param array <string> $fields
+	 * @param string[] $fields
+	 *
 	 * @return string
 	 */
-
 	public function getGetByFieldsQuery(array $fields): string {
-		$fieldsStrArray = [];
-		foreach ($fields as $field)
-			$fieldsStrArray[] = "$field = :$field";
-		$fieldsStr = join(" AND ", $fieldsStrArray);
-
-		return "SELECT * FROM $this->tableName WHERE $fieldsStr";
+		return "SELECT * FROM $this->tableName WHERE " . self::fieldsToQuery($fields);
 	}
+
+	/** Get a single line by ID
+	 *
+	 * @param KeyValueList $fields
+	 *
+	 * @return Model[]
+	 */
+	public function getByFields(KeyValueList $fields): array {
+		$stmt = Rest::$db->prepare($this->getGetByFieldsQuery($fields->getKeys()));
+		foreach ($fields->values as $field) {
+			$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
+		}
+		$stmt->execute();
+
+		$modelArray = [];
+		foreach ($stmt->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row) $modelArray[] = $row;
+
+		foreach ($modelArray as $model) $model->preserveBooleans();
+
+		return $modelArray;
+	}
+
 
 	/** Get the Create query
 	 *
@@ -107,6 +176,24 @@ class Repository {
 
 		return "INSERT INTO $this->tableName ($this->idKey, $columns) VALUES (:$this->idKey, $keys)";
 	}
+
+	/** Create a model
+	 *
+	 * @param Model $model
+	 *
+	 * @return Model
+	 */
+	public function create(Model $model): Model {
+		$id = $this->getNewID();
+		$model->{$this->idKey} = $id;
+
+		$stmt = Rest::$db->prepare($this->getCreateQuery());
+		$this->bindStatement($model, $stmt);
+		$stmt->execute();
+
+		return $this->getByID($id);
+	}
+
 
 	/** Get the Update query
 	 *
@@ -122,131 +209,10 @@ class Repository {
 		return "UPDATE $this->tableName SET $setProperties WHERE $this->idKey = :$this->idKey;";
 	}
 
-	/** Get the Delete query
-	 *
-	 * @return string
-	 */
-	public function getDeleteQuery(): string {
-		return "DELETE FROM $this->tableName WHERE $this->idKey = :$this->idKey";
-	}
-
-	/** Get the PDO param constant
-	 *
-	 * @param mixed $value to evaluate
-	 * @return int PDO::PARAM
-	 */
-	public static function getPdoParam($value): int {
-		if (is_bool($value))
-			return PDO::PARAM_BOOL;
-		if (is_numeric($value))
-			return PDO::PARAM_INT;
-		return PDO::PARAM_STR;
-	}
-
-	/** Get a new ID
-	 *
-	 * @return int
-	 */
-	public function getNewID(): int {
-		$last = -1;
-		foreach (Rest::$db->query("SELECT $this->idKey FROM $this->tableName ORDER BY $this->idKey ASC") as $result) {
-			if ($last + 1 != $result[0])
-				return $last + 1;
-			$last++;
-		}
-		return $last + 1;
-	}
-
-	/** Bind Model's attributes to the statement
-	 *
-	 * @param Model        $model
-	 * @param PDOStatement $stmt
-	 * @throws Exception
-	 */
-	public function bindStatement(Model $model, PDOStatement $stmt) {
-		if (!is_a($model, $this->modelName))
-			throw new Exception("Received a " . get_class($model) . " object, waiting $this->modelName");
-
-		foreach ($model as $key => $value) {
-			$stmt->bindValue(":" . $key, $value, self::getPdoParam($value));
-		}
-	}
-
-	/*** EXECUTE QUERIES ***/
-	/** Get all lines
-	 *
-	 * @return array<Model>
-	 */
-	public function getAll(): array {
-		$modelArray = [];
-		foreach (Rest::$db->query($this->getGetAllQuery())->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row) {
-			$modelArray[] = $row;
-		}
-		foreach ($modelArray as $model)
-			$model->preserveBooleans();
-
-		return $modelArray;
-	}
-
-	/** Get a single line by ID
-	 *
-	 * @param mixed $id
-	 * @return Model
-	 */
-	public function getByID($id): Model {
-		$stmt = Rest::$db->prepare($this->getGetByIDQuery());
-		$stmt->bindValue(":$this->idKey", $id, self::getPdoParam($id));
-		$stmt->execute();
-		$model = $stmt->fetchObject($this->modelName);
-
-		$model->preserveBooleans();
-
-		return $model;
-	}
-
-	/** Get a single line by ID
-	 *
-	 * @param array $fields
-	 * @param Model $search
-	 * @return array<Model>
-	 */
-	public function getByFields(array $fields, Model $search): array {
-		$stmt = Rest::$db->prepare($this->getGetByFieldsQuery($fields));
-		foreach ($fields as $field) {
-			$value = $search->{$field};
-			$stmt->bindValue(":$field", $value, self::getPdoParam($value));
-		}
-		$stmt->execute();
-
-		$modelArray = [];
-		foreach ($stmt->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row)
-			$modelArray[] = $row;
-
-		foreach ($modelArray as $model)
-			$model->preserveBooleans();
-
-		return $modelArray;
-	}
-
-	/** Create a model
-	 *
-	 * @param Model $model
-	 * @return Model
-	 */
-	public function create(Model $model): Model {
-		$id = $this->getNewID();
-		$model->{$this->idKey} = $id;
-
-		$stmt = Rest::$db->prepare($this->getCreateQuery());
-		$this->bindStatement($model, $stmt);
-		$stmt->execute();
-
-		return $this->getByID($id);
-	}
-
 	/** Update model
 	 *
 	 * @param Model $model
+	 *
 	 * @return Model
 	 */
 	public function update(Model $model): Model {
@@ -258,6 +224,14 @@ class Repository {
 	}
 
 
+	/** Get the Delete query
+	 *
+	 * @return string
+	 */
+	public function getDeleteQuery(): string {
+		return "DELETE FROM $this->tableName WHERE $this->idKey = :$this->idKey";
+	}
+
 	/** Delete a model
 	 *
 	 * @param $id
@@ -266,5 +240,69 @@ class Repository {
 		$stmt = Rest::$db->prepare($this->getDeleteQuery());
 		$stmt->bindValue(":$this->idKey", $id, self::getPdoParam($id));
 		$stmt->execute();
+	}
+
+
+	/** Get the Delete query with fields
+	 *
+	 * @param KeyValueList $fields
+	 *
+	 * @return string
+	 */
+	public function getDeleteByFieldsQuery(KeyValueList $fields): string {
+		return "DELETE FROM $this->tableName WHERE " . self::fieldsToQuery($fields->getKeys());
+	}
+
+	/** Delete models by fields
+	 *
+	 * @param KeyValueList $fields
+	 */
+	public function deleteByFields(KeyValueList $fields) {
+		$stmt = Rest::$db->prepare($this->getDeleteByFieldsQuery($fields));
+		foreach ($fields->values as $field) {
+			$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
+		}
+		$stmt->execute();
+	}
+
+
+	/** Get the PDO param constant
+	 *
+	 * @param mixed $value to evaluate
+	 *
+	 * @return int PDO::PARAM
+	 */
+	public static function getPdoParam($value): int {
+		if (is_bool($value)) return PDO::PARAM_BOOL;
+		if (is_numeric($value)) return PDO::PARAM_INT;
+		return PDO::PARAM_STR;
+	}
+
+	/** Transform a array of parameter names into a SQL string
+	 *    example : ("propA", "propB") => "propA = :propA AND propB = :propB"
+	 *
+	 * @param array $fields
+	 *
+	 * @return string
+	 */
+	public static function fieldsToQuery(array $fields) {
+		$fieldsStrArray = [];
+		foreach ($fields as $field) $fieldsStrArray[] = "$field = :$field";
+		return join(" AND ", $fieldsStrArray);
+	}
+
+	/** Bind Model's attributes to the statement
+	 *
+	 * @param Model        $model
+	 * @param PDOStatement $stmt
+	 *
+	 * @throws Exception
+	 */
+	public function bindStatement(Model $model, PDOStatement $stmt) {
+		if (!is_a($model, $this->modelName)) throw new Exception("Received a " . get_class($model) . " object, waiting $this->modelName");
+
+		foreach ($model as $key => $value) {
+			$stmt->bindValue(":" . $key, $value, self::getPdoParam($value));
+		}
 	}
 }
