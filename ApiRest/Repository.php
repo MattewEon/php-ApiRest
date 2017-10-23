@@ -117,20 +117,20 @@ class Repository {
 	 *
 	 * @param KeyValue $field
 	 *
-	 * @return Model
+	 * @return Model[]
 	 * @throws Exception
 	 */
-	public function getByField(KeyValue $field): Model {
+	public function getByField(KeyValue $field): array {
 		$stmt = Rest::$db->prepare($this->getGetByFieldQuery($field->key));
 		$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
 		$stmt->execute();
-		$model = $stmt->fetchObject($this->modelName);
 
-		if ($model === false) throw new Exception("GetByField error");
+		$modelArray = [];
+		foreach ($stmt->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row) $modelArray[] = $row;
 
-		$model->preserveBooleans();
+		foreach ($modelArray as $model) $model->preserveBooleans();
 
-		return $model;
+		return $modelArray;
 	}
 
 
@@ -239,6 +239,28 @@ class Repository {
 	public function delete($id) {
 		$stmt = Rest::$db->prepare($this->getDeleteQuery());
 		$stmt->bindValue(":$this->idKey", $id, self::getPdoParam($id));
+		$stmt->execute();
+	}
+
+
+	/** Get the Delete query with field
+	 *
+	 * @param KeyValue $field
+	 *
+	 * @return string
+	 */
+	public function getDeleteByFieldQuery(string $field): string {
+		return "DELETE FROM $this->tableName WHERE $field = :$field";
+	}
+
+	/** Delete models by field
+	 *
+	 * @param KeyValue $field
+	 */
+	public function deleteByField(KeyValue $field) {
+		$stmt = Rest::$db->prepare($this->getDeleteByFieldQuery($field->key));
+		$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
+
 		$stmt->execute();
 	}
 

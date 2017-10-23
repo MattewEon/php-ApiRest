@@ -39,9 +39,9 @@ abstract class Service {
 	 *
 	 * @param KeyValue $field
 	 *
-	 * @return Model
+	 * @return Model[]
 	 */
-	public function getByField(KeyValue $field): Model {
+	public function getByField(KeyValue $field): array {
 		return $this->repository->getByField($field);
 	}
 
@@ -80,6 +80,17 @@ abstract class Service {
 	 */
 	public function delete($id) {
 		$this->repository->delete($id);
+		return "";
+	}
+
+	/** Delete a model by KeyValue list
+	 *
+	 * @param KeyValue $field
+	 *
+	 * @return string
+	 */
+	public function deleteByField(KeyValue $field) {
+		$this->repository->deleteByField($field);
 		return "";
 	}
 

@@ -31,6 +31,9 @@ This repository contains a little framework capable of doing a RestAPI easily wi
     - Added `KeyValue` and `KeyValueList` structure class
         - Updated `Service` and `Repository` classes
     - Added `Credentials` class
+- 23 Oct. 2017
+    - Added `deleteByField()` function
+    - Updated `getByField()` function, it returns now `Model[]` instead of `Model`
 
 # 1. <a name="1"></a>Features
 
@@ -83,9 +86,19 @@ It's cool, but how the RestAPI handle that ?
 - Create the controller associated, named `UserController`
 - Call the Controller's method `processUrl`
     - Verify the url match
+    - Check if guards are okay
     - Call the associated function
     - Process query(ies) and return the result
-
+    
+In the `user` directory, you will find an example to add paths to your API REST for a `User` object. Each files related
+to a specific object / class / table will have to be in the same folder and follow the same rules as User :
+- `/modelname/`
+    - `include.php` 
+    - `ModelName.controller.php` 
+    - `ModelName.model.php` 
+    - `ModelName.repository.php` 
+    - `ModelName.service.php`
+    
 ## 2.2 <a name="2.2"></a> Controllers
 
 Controllers are the the first layer called by the RestAPI. They have to be
@@ -108,7 +121,7 @@ have to override the ApiRoute by declaring it in your controller.
 Here is an example of a UserController class :
 ```php
 <?php
-// FILE rest/User/User.controller.php
+// FILE rest/user/User.controller.php
 require_once __DIR__ . "/../ApiRest/Rest.php";
 require_once __DIR__ . "/../ApiRest/Controller.php";
 
@@ -167,7 +180,7 @@ By default, functions associated to Controller's paths are generated :
 Here is an example of a UserService class :
 ```php
 <?php
-// FILE rest/User/User.service.php
+// FILE rest/user/User.service.php
 require_once __DIR__ . "/../ApiRest/Service.php";
 
 class UserService extends Service {
@@ -192,6 +205,7 @@ Same as Services, by default theses functions are available :
 Here is an example of UserRepository class :
 ```php
 <?php
+// FILE rest/user/User.repository.php
 require_once __DIR__ . "/../ApiRest/Repository.php";
 
 class UserRepository extends Repository {
