@@ -18,6 +18,9 @@ This repository contains a little framework capable of doing a RestAPI easily wi
 
 # Updates
 
+- 5 March 2018
+    - Added `Rest::scalePicture` function
+    - Added `dbIgnore` feature
 - 22 Sept. 2017
     - Added `Controller->getByFields` functions
     - Added `Rest::uploadFile` function
@@ -248,6 +251,9 @@ constructor : `addBoolean("booleanField1", "booleanField2", ...)`
 On the same way, you can mark a field as jsonIgnore by calling the function
 `addIgnore("ignoredField1", ...)`. Then, to convert Model's instances to
 JSON call the `encode()` function !
+
+There is another function : `addDbIgnore("field1", ...)` used to specify which
+fields are not stored in the dataBase.
 
 Model classes can be retrieved from JSON using this static function :
 `Model::fromJSON(stdClass $data)`.

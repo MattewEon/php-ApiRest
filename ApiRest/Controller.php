@@ -108,8 +108,8 @@ abstract class Controller {
 	 * @return string JSON
 	 */
 	public static function create(array $params, stdClass $body): string {
-		$user = static::$modelName::fromJSON($body);
-		return static::$service->create($user)->toJSON();
+		$model = static::$modelName::fromJSON($body);
+		return static::$service->create($model)->toJSON();
 	}
 
 	/** Update a model
@@ -119,8 +119,8 @@ abstract class Controller {
 	 * @return string JSON
 	 */
 	public static function update(array $params, stdClass $body): string {
-		$user = static::$modelName::fromJSON($body);
-		return static::$service->update($user)->toJSON();
+		$model = static::$modelName::fromJSON($body);
+		return static::$service->update($model)->toJSON();
 	}
 
 	/** Delete a model

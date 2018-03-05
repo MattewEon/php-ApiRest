@@ -6,9 +6,11 @@
  */
 abstract class Model {
 	/** Contains all fields to ignore in JSON */
-	private $jsonIgnore = ["jsonIgnore", "booleans"];
+	private $jsonIgnore = ["jsonIgnore", "booleans", "dbIgnore"];
 	/** Contains all fields to cast to boolean (SQL value = '1') */
 	private $booleans = [];
+	/** Contains all fields to ignore when binding in DB */
+	private $dbIgnore = ["jsonIgnore", "booleans", "dbIgnore"];
 
 	/** Get the model from JSON string
 	 *
@@ -57,6 +59,25 @@ abstract class Model {
 	public function addBoolean(string ...$fields) {
 		foreach ($fields as $field)
 			$this->booleans[] = $field;
+	}
+
+	/** Add field(s) on the dbIgnore array
+	 *
+	 * @param string[] $fields fields to ignore when binding statement
+	 */
+	public function addDbIgnore(string ...$fields) {
+		foreach ($fields as $field)
+			$this->dbIgnore[] = $field;
+	}
+
+	/** Check if the field $field should be ignored when binding statement
+	 *
+	 * @param string $field
+	 *
+	 * @return bool True if $field is in $dbIgnore
+	 */
+	public function isDbIgnore(string $field): bool {
+		return in_array($field, $this->dbIgnore);
 	}
 
 	/** Transform booleans fields into booleans (SQL value = '1') */

@@ -135,4 +135,24 @@ class Rest {
 
 		return move_uploaded_file($tmp_name, Rest::getUploadDir() . "/" . $newFileName);
 	}
+
+	/** Change scale of a picture and save it in a new file
+	 *
+	 * @param string $input  input file name
+	 * @param string $output output file name
+	 * @param float  $scale  scale of the new picture
+	 */
+	public static function scalePicture(string $input, string $output, float $scale) {
+		// Get the size and new size
+		list($width, $height) = getimagesize($input);
+		$new_width = $width * $scale;
+		$new_height = $height * $scale;
+
+		// Scale the picture
+		$image_p = imagecreatetruecolor($new_width, $new_height);
+		$image = imagecreatefromjpeg($input);
+		imagecopyresampled($image_p, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+
+		imagepng($image_p, $output);
+	}
 }

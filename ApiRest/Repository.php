@@ -25,6 +25,7 @@ class Repository {
 	 * @throws Exception if modelName don't extend Model
 	 */
 	public function __construct(string $tableName, string $modelName) {
+		/** @var Model $model */
 		$model = new $modelName();
 		if (!is_subclass_of($model, "Model")) throw new Exception("$modelName have to extend the abstract class Model");
 
@@ -36,6 +37,11 @@ class Repository {
 
 		$this->idKey = $keys[0];
 		unset($keys[0]);
+		foreach(array_keys($keys) as $i) {
+			if ($model->isDbIgnore($keys[$i])) {
+				unset($keys[$i]);
+			}
+		}
 		$this->properties = $keys;
 	}
 
@@ -245,7 +251,7 @@ class Repository {
 
 	/** Get the Delete query with field
 	 *
-	 * @param KeyValue $field
+	 * @param string $field
 	 *
 	 * @return string
 	 */
@@ -324,7 +330,8 @@ class Repository {
 		if (!is_a($model, $this->modelName)) throw new Exception("Received a " . get_class($model) . " object, waiting $this->modelName");
 
 		foreach ($model as $key => $value) {
-			$stmt->bindValue(":" . $key, $value, self::getPdoParam($value));
+			if (!$model->isDbIgnore($key))
+				$stmt->bindValue(":" . $key, $value, self::getPdoParam($value));
 		}
 	}
 }
