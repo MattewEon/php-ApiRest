@@ -14,6 +14,7 @@ abstract class Controller {
 	/** @var  ApiRoute[] Contains all urls to match */
 	protected static $apiRoutes;
 
+
 	/** Controller constructor and bind defaults api routes.
 	 *
 	 * @param string $modelName
@@ -35,11 +36,13 @@ abstract class Controller {
 		$this->createApiRoute(Rest::DELETE, '$id', 'delete', [new LoginGuard()]);
 	}
 
+
 	/** Process the url, check if there is a match and call the associate function
 	 *
 	 * @param string $method Rest::GET POST PUT DELETE
 	 * @param string $url
 	 * @param string $body
+	 *
 	 * @return string response
 	 * @throws Exception when no match
 	 */
@@ -47,20 +50,21 @@ abstract class Controller {
 		$apiUrl = new ApiUrl($method, $url);
 		$data_body = $body == "" ? new stdClass() : json_decode($body);
 
-		foreach (static::$apiRoutes as $apiRoute)
-			if ($apiRoute->match($apiUrl)) {
-				$apiRoute->checkGuards();
-				return $apiRoute->callFunction($apiUrl, $data_body);
-			}
+		foreach (static::$apiRoutes as $apiRoute) if ($apiRoute->match($apiUrl)) {
+			$apiRoute->checkGuards();
+			return $apiRoute->callFunction($apiUrl, $data_body);
+		}
 
 		throw new Exception("URL '" . static::$modelName . "/$url' has no match");
 	}
+
 
 	/** Add a route match
 	 *
 	 * @param ApiRoute $apiRoute
 	 */
 	public static function addApiRoute(ApiRoute $apiRoute) { static::$apiRoutes[] = $apiRoute; }
+
 
 	/** Create and add an ApiRoute
 	 *
@@ -82,21 +86,70 @@ abstract class Controller {
 		self::addApiRoute($newApiRoute);
 	}
 
+
+	/**
+	 * Create a KeyValueList from $_GET parameters, and filter keys depending of the object
+	 *
+	 * @return KeyValueList
+	 */
+	private static function filterGetParamsWithModel(): KeyValueList {
+		/** @var Model $model */
+		$model = new static::$modelName();
+		/** @var string[] $modelParameters */
+		$modelParameters = get_object_vars($model);
+		/** @var KeyValueList $parameters */
+		$parameters = new KeyValueList();
+
+		foreach ($_GET as $key => $value) {
+			if ($model->isDbIgnore($key)) continue;
+			if (!array_key_exists($key, $modelParameters)) continue;
+
+			$parameters->add(new KeyValue($key, $value));
+		}
+
+		return $parameters;
+	}
+
+
 	/** Get All lines
 	 *
 	 * @return string JSON
 	 */
 	public static function getAll(): string {
+		$parameters = static::filterGetParamsWithModel();
+
+		if ($parameters->size() == 0) return static::getAllNoParameters(); else return static::getAllWithParameters($parameters);
+	}
+
+	/** Get All lines
+	 *
+	 * @return string JSON
+	 */
+	private static function getAllNoParameters(): string {
 		$all = static::$service->getAll();
 		$array = [];
-		foreach ($all as $one)
-			$array[] = $one->filter();
+		foreach ($all as $one) $array[] = $one->filter();
 		return json_encode($array);
 	}
+
+	/** Get All lines, filtered by parameters
+	 *
+	 * @param KeyValueList $parameters
+	 *
+	 * @return string JSON
+	 */
+	private static function getAllWithParameters(KeyValueList $parameters): string {
+		$all = static::$service->getByFields($parameters);
+		$array = [];
+		foreach ($all as $one) $array[] = $one->filter();
+		return json_encode($array);
+	}
+
 
 	/** Get a single line by ID
 	 *
 	 * @param string[] $params
+	 *
 	 * @return string JSON
 	 */
 	public static function getById(array $params): string { return static::$service->getById($params["id"])->toJSON(); }
@@ -105,6 +158,7 @@ abstract class Controller {
 	 *
 	 * @param string[] $params
 	 * @param stdClass $body
+	 *
 	 * @return string JSON
 	 */
 	public static function create(array $params, stdClass $body): string {
@@ -116,6 +170,7 @@ abstract class Controller {
 	 *
 	 * @param string[] $params
 	 * @param stdClass $body
+	 *
 	 * @return string JSON
 	 */
 	public static function update(array $params, stdClass $body): string {
@@ -126,6 +181,7 @@ abstract class Controller {
 	/** Delete a model
 	 *
 	 * @param string[] $params
+	 *
 	 * @return string ""
 	 */
 	public static function delete(array $params): string {

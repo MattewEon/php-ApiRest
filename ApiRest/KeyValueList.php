@@ -60,11 +60,10 @@ class KeyValueList {
 	 *
 	 * @param string $key
 	 *
-	 * @return number
+	 * @return int
 	 */
-	public function getKeyIndex(string $key): number {
-		foreach ($this->values as $index => $value)
-			if ($value->key == $key) return $index;
+	public function getKeyIndex(string $key): int {
+		foreach ($this->values as $index => $value) if ($value->key == $key) return $index;
 
 		return -1;
 	}
@@ -79,5 +78,15 @@ class KeyValueList {
 		foreach ($this->values as $value) if ($value->key == $key) return true;
 
 		return false;
+	}
+
+
+	/**
+	 * Get the size of the list
+	 *
+	 * @return int
+	 */
+	public function size(): int {
+		return count($this->values);
 	}
 }
