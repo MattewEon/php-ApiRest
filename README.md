@@ -18,6 +18,8 @@ This repository contains a little framework capable of doing a RestAPI easily wi
 
 # Updates
 
+- 6 Jun. 2018
+    - Updated the way that route are checked, and now allow static route to override route with parameters
 - 24 May 2018
     - Added GET parameters support for `Controller->getAll` function
 - 5 March 2018
@@ -176,6 +178,14 @@ var_dump($params);
 //    "param2" => "value2",
 //)
 ```
+
+You can override a route with another without removing it, if they don't have the same
+amount of parameters. For example, theses routes will be kept :
+ ```php
+ $this->createApiRoute(Rest::GET, '$id', "getById");
+ $this->createApiRoute(Rest::GET, 'current', "getCurrent");
+ ```
+ If possible, the route 'current' will be triggered. If it's not, the '$id' route will be triggered.
 
 ## 2.3 <a name="2.3"></a> Services
 

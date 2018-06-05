@@ -59,11 +59,21 @@ abstract class Controller {
 	}
 
 
-	/** Add a route match
+	/** Add a route match in the right order so that the first route is the good one
 	 *
-	 * @param ApiRoute $apiRoute
+	 * @param ApiRoute $newApiRoute
 	 */
-	public static function addApiRoute(ApiRoute $apiRoute) { static::$apiRoutes[] = $apiRoute; }
+	public static function addApiRoute(ApiRoute $newApiRoute) {
+		foreach (static::$apiRoutes as $index => $apiRoute) {
+			if ($newApiRoute->route->getWeight() > $apiRoute->route->getWeight()) {
+				array_splice(static::$apiRoutes, $index, 0, null);
+				static::$apiRoutes[$index] = $newApiRoute;
+				return;
+			}
+		}
+
+		static::$apiRoutes[] = $newApiRoute;
+	}
 
 
 	/** Create and add an ApiRoute
@@ -77,7 +87,7 @@ abstract class Controller {
 		$newApiRoute = new ApiRoute($method, $url, get_called_class() . "::" . $func, $guards);
 
 		foreach (static::$apiRoutes as &$apiRoute) {
-			if ($apiRoute->match($newApiRoute->route)) {
+			if ($apiRoute->perfectMatch($newApiRoute->route)) {
 				$apiRoute = $newApiRoute;
 				return;
 			}

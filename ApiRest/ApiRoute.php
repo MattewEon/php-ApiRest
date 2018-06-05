@@ -35,6 +35,15 @@ class ApiRoute {
 		return $this->route->match($requestUrl);
 	}
 
+	/** Check if it match perfectly (weight included) with an ApiUrl
+	 *
+	 * @param ApiUrl $requestUrl
+	 * @return bool
+	 */
+	public function perfectMatch(ApiUrl $requestUrl): bool {
+		return $this->route->perfectMatch($requestUrl);
+	}
+
 	/** Check all guards and throw an Exception if access is not authorized
 	 *
 	 * @throws Exception

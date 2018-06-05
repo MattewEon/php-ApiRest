@@ -24,6 +24,19 @@ class ApiUrl {
 		$this->url = explode("/", $url);
 	}
 
+	/**
+	 * Return the weight of the ApiUrl. For each parameters ($PARAMETER) the weight increase by one
+	 *
+	 * @return int
+	 */
+	public function getWeight() : int {
+		$weight = 0;
+		foreach ($this->url as $value) {
+			if (substr($value, 0, 1) == '$') $weight++;
+		}
+
+		return $weight;
+	}
 
 	/** Get parameters of url
 	 *
@@ -57,6 +70,26 @@ class ApiUrl {
 			if ($value == $requestUrl->url[$index])
 				continue;
 			if (substr($value, 0, 1) == '$' && isset($requestUrl->url[$index]))
+				continue;
+			else return false;
+		}
+
+		return count($this->url) == count($requestUrl->url);
+	}
+
+	/** Check if an ApiUrl match perfectly (weight included) with current ApiUrl
+	 *
+	 * @param ApiUrl $requestUrl
+	 * @return bool
+	 */
+	public function perfectMatch(ApiUrl $requestUrl): bool {
+		if ($this->method != $requestUrl->method)
+			return false;
+
+		foreach ($this->url as $index => $value) {
+			if ($value == $requestUrl->url[$index])
+				continue;
+			if (substr($value, 0, 1) == '$' && substr($requestUrl->url[$index], 0, 1) == '$')
 				continue;
 			else return false;
 		}
