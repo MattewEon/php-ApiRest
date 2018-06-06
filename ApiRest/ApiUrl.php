@@ -21,7 +21,10 @@ class ApiUrl {
 			throw new Exception("Method $method is not available !");
 
 		$this->method = $method;
-		$this->url = explode("/", $url);
+
+		$url = trim($url, "/");
+		if ($url == "") $this->url = [];
+		else $this->url = explode("/", $url);
 	}
 
 	/**
@@ -66,6 +69,9 @@ class ApiUrl {
 		if ($this->method != $requestUrl->method)
 			return false;
 
+		if (count($this->url) != count($requestUrl->url))
+			return false;
+
 		foreach ($this->url as $index => $value) {
 			if ($value == $requestUrl->url[$index])
 				continue;
@@ -74,7 +80,7 @@ class ApiUrl {
 			else return false;
 		}
 
-		return count($this->url) == count($requestUrl->url);
+		return true;
 	}
 
 	/** Check if an ApiUrl match perfectly (weight included) with current ApiUrl
@@ -86,6 +92,9 @@ class ApiUrl {
 		if ($this->method != $requestUrl->method)
 			return false;
 
+		if (count($this->url) != count($requestUrl->url))
+			return false;
+
 		foreach ($this->url as $index => $value) {
 			if ($value == $requestUrl->url[$index])
 				continue;
@@ -94,6 +103,6 @@ class ApiUrl {
 			else return false;
 		}
 
-		return count($this->url) == count($requestUrl->url);
+		return true;
 	}
 }

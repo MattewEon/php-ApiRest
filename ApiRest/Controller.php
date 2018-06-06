@@ -66,8 +66,7 @@ abstract class Controller {
 	public static function addApiRoute(ApiRoute $newApiRoute) {
 		foreach (static::$apiRoutes as $index => $apiRoute) {
 			if ($newApiRoute->route->getWeight() > $apiRoute->route->getWeight()) {
-				array_splice(static::$apiRoutes, $index, 0, null);
-				static::$apiRoutes[$index] = $newApiRoute;
+				array_splice(static::$apiRoutes, $index, 0, [$newApiRoute]);
 				return;
 			}
 		}
