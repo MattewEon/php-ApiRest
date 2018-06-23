@@ -21,11 +21,13 @@ abstract class Controller {
 	 */
 	public function __construct(string $modelName) {
 		$serviceName = $modelName . "Service";
-		static::$service = new $serviceName($modelName);
+
+		static::$service = $serviceName::getInstance($modelName);
+
 		static::$modelName = $modelName;
 		static::$apiRoutes = [];
 
-		//TODO : match with authoriations
+		//TODO : match with authorisations
 		$this->createApiRoute(Rest::GET, '', "getAll", [new LoginGuard()]);
 		$this->createApiRoute(Rest::GET, '$id', "getById", [new LoginGuard()]);
 

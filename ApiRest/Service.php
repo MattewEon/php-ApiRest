@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/Rest.php";
+require_once __DIR__ . "/Singleton.php";
 require_once __DIR__ . "/KeyValue.php";
 require_once __DIR__ . "/KeyValueList.php";
 
@@ -7,7 +8,7 @@ require_once __DIR__ . "/KeyValueList.php";
  *
  * @author Mathieu Gallo <gallo.mathieu@outlook.fr>
  */
-abstract class Service {
+abstract class Service extends Singleton {
 	/** @var Repository */
 	public $repository;
 

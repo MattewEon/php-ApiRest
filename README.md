@@ -18,6 +18,9 @@ This repository contains a little framework capable of doing a RestAPI easily wi
 
 # Updates
 
+- 23 Jun. 2018
+    - Improved Services with the `Singleton` Design Pattern
+        - This is fixing circular includes on services constructor
 - 6 Jun. 2018
     - Updated the way that route are checked, and now allow static route to override route with parameters
 - 24 May 2018
@@ -185,13 +188,17 @@ amount of parameters. For example, theses routes will be kept :
  $this->createApiRoute(Rest::GET, '$id', "getById");
  $this->createApiRoute(Rest::GET, 'current', "getCurrent");
  ```
- If possible, the route 'current' will be triggered. If it's not, the '$id' route will be triggered.
+ If possible, the route 'current' will be triggered. If it's not, the '$id' route will be triggered
+ .
 
 ## 2.3 <a name="2.3"></a> Services
 
 Services are the next layer called by controllers : They are between Controller
-classes and Repository classes. Services are used to get data and make process
-the data.
+classes and Repository classes. Services are used to get data from `Repository`
+classes and make process the data.
+
+`Service` classes also can call others services to cross data and make
+special process.
 
 By default, functions associated to Controller's paths are generated : 
 - `getAll()`
@@ -210,6 +217,25 @@ class UserService extends Service {
 	public function login(User $user): string {
 		return $this->repository->login($user);
 	}
+	
+	function initialize() { }
+}
+```
+
+If you want to use another `Service` in theses class, you have to declare
+it and to initialize the `Service` class in the `initialize` function like this:
+```php
+class UserService extends Service {
+	/** @var $bookService BookService */
+	public $bookService;
+
+	public function login(User $user): string {
+		return $this->repository->login($user);
+	}
+	
+	function initialize() {
+		$this->bookService = BookService::getInstance("Book");
+    }
 }
 ```
 
