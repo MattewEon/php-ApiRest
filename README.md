@@ -225,6 +225,7 @@ class UserService extends Service {
 If you want to use another `Service` in theses class, you have to declare
 it and to initialize the `Service` class in the `initialize` function like this:
 ```php
+<?php
 class UserService extends Service {
 	/** @var $bookService BookService */
 	public $bookService;
@@ -235,7 +236,7 @@ class UserService extends Service {
 	
 	function initialize() {
 		$this->bookService = BookService::getInstance("Book");
-    }
+	}
 }
 ```
 
