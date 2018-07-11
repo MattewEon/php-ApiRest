@@ -18,6 +18,8 @@ This repository contains a little framework capable of doing a RestAPI easily wi
 
 # Updates
 
+- 11 Jul. 2018
+    - Added `Rest::existFile` function
 - 23 Jun. 2018
     - Improved Services with the `Singleton` Design Pattern
         - This is fixing circular includes on services constructor

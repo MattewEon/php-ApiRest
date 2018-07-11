@@ -119,6 +119,19 @@ class Rest {
 		return __DIR__ . "/../../" . Rest::$uploadDir;
 	}
 
+
+	/**
+	 * Check $_FILES array if the file given exist or not
+	 *
+	 * @param string $fileName
+	 *
+	 * @return bool
+	 */
+	public static function existFile(string $fileName): bool {
+		return isset($_FILES[ $fileName ]);
+	}
+
+
 	/** Upload a file to the uploadDir
 	 *
 	 * @param string $fileName
