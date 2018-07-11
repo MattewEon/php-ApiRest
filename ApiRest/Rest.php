@@ -140,7 +140,7 @@ class Rest {
 	 * @throws Exception if file don't exist
 	 */
 	public static function uploadFile(string $fileName, string $newFileName): bool {
-		if (Rest::existFile($_FILES[$fileName]))
+		if (!Rest::existFile($_FILES[$fileName]))
 			throw new Exception("File $fileName is not present in \$_FILES (" . join(", ", array_keys($_FILES)) . ")");
 
 		$file = $_FILES[$fileName];
