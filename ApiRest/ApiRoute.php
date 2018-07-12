@@ -13,7 +13,9 @@ class ApiRoute {
 	/** @var Guard[] */
 	public $guards;
 
-	/** ApiRoute constructor
+
+	/**
+	 * ApiRoute constructor
 	 *
 	 * @param string   $method
 	 * @param string   $url
@@ -21,30 +23,38 @@ class ApiRoute {
 	 * @param Guard[]  $guards
 	 */
 	public function __construct(string $method, string $url, callable $func, array $guards = []) {
-		$this->route = new ApiUrl($method, $url);
-		$this->func = $func;
+		$this->route  = new ApiUrl($method, $url);
+		$this->func   = $func;
 		$this->guards = $guards;
 	}
 
-	/** Check if it match with an ApiUrl
+
+	/**
+	 * Check if it match with an ApiUrl
 	 *
 	 * @param ApiUrl $requestUrl
+	 *
 	 * @return bool
 	 */
 	public function match(ApiUrl $requestUrl): bool {
 		return $this->route->match($requestUrl);
 	}
 
-	/** Check if it match perfectly (weight included) with an ApiUrl
+
+	/**
+	 * Check if it match perfectly (weight included) with an ApiUrl
 	 *
 	 * @param ApiUrl $requestUrl
+	 *
 	 * @return bool
 	 */
 	public function perfectMatch(ApiUrl $requestUrl): bool {
 		return $this->route->perfectMatch($requestUrl);
 	}
 
-	/** Check all guards and throw an Exception if access is not authorized
+
+	/**
+	 * Check all guards and throw an Exception if access is not authorized
 	 *
 	 * @throws Exception
 	 */
@@ -55,20 +65,26 @@ class ApiRoute {
 		}
 	}
 
-	/** Call the associate function with the parameters
+
+	/**
+	 * Call the associate function with the parameters
 	 *
-	 * @param ApiUrl   $requestUrl
-	 * @param stdClass $body
+	 * @param ApiUrl $requestUrl
+	 * @param mixed  $body
+	 *
 	 * @return mixed
 	 */
-	public function callFunction(ApiUrl $requestUrl, stdClass $body) {
+	public function callFunction(ApiUrl $requestUrl, $body) {
 		$func = $this->func;
 		return $func($this->getParams($requestUrl), $body);
 	}
 
-	/** Get params associated to the current url
+
+	/**
+	 * Get params associated to the current url
 	 *
 	 * @param ApiUrl $requestUrl
+	 *
 	 * @return array
 	 */
 	public function getParams(ApiUrl $requestUrl): array { return $this->route->getParams($requestUrl); }
