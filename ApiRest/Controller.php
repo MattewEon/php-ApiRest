@@ -15,19 +15,17 @@ abstract class Controller {
 	protected static $apiRoutes;
 
 
-	/** Controller constructor and bind defaults api routes.
+	/**
+	 * Controller constructor and bind defaults api routes.
 	 *
 	 * @param string $modelName
 	 */
 	public function __construct(string $modelName) {
-		$serviceName = $modelName . "Service";
-
-		static::$service = $serviceName::getInstance($modelName);
-
+		$serviceName       = $modelName . "Service";
+		static::$service   = $serviceName::getInstance($modelName);
 		static::$modelName = $modelName;
 		static::$apiRoutes = [];
 
-		//TODO : match with authorisations
 		$this->createApiRoute(Rest::GET, '', "getAll", [new LoginGuard()]);
 		$this->createApiRoute(Rest::GET, '$id', "getById", [new LoginGuard()]);
 
@@ -39,7 +37,8 @@ abstract class Controller {
 	}
 
 
-	/** Process the url, check if there is a match and call the associate function
+	/**
+	 * Process the url, check if there is a match and call the associate function
 	 *
 	 * @param string $method Rest::GET POST PUT DELETE
 	 * @param string $url
@@ -49,7 +48,7 @@ abstract class Controller {
 	 * @throws Exception when no match
 	 */
 	public function processUrl(string $method, string $url, string $body): string {
-		$apiUrl = new ApiUrl($method, $url);
+		$apiUrl    = new ApiUrl($method, $url);
 		$data_body = $body == "" ? new stdClass() : json_decode($body);
 
 		foreach (static::$apiRoutes as $apiRoute) if ($apiRoute->match($apiUrl)) {
@@ -61,7 +60,8 @@ abstract class Controller {
 	}
 
 
-	/** Add a route match in the right order so that the first route is the good one
+	/**
+	 * Add a route match in the right order so that the first route is the good one
 	 *
 	 * @param ApiRoute $newApiRoute
 	 */
@@ -77,7 +77,8 @@ abstract class Controller {
 	}
 
 
-	/** Create and add an ApiRoute
+	/**
+	 * Create and add an ApiRoute
 	 *
 	 * @param string  $method
 	 * @param string  $url
@@ -95,6 +96,14 @@ abstract class Controller {
 		}
 
 		self::addApiRoute($newApiRoute);
+	}
+
+
+	/**
+	 * Clear the $apiRoutes array
+	 */
+	public static function clearApiRoutes() {
+		static::$apiRoutes = [];
 	}
 
 
@@ -122,42 +131,51 @@ abstract class Controller {
 	}
 
 
-	/** Get All lines
+	/**
+	 * Get All lines
 	 *
 	 * @return string JSON
 	 */
 	public static function getAll(): string {
 		$parameters = static::filterGetParamsWithModel();
 
-		if ($parameters->size() == 0) return static::getAllNoParameters(); else return static::getAllWithParameters($parameters);
+		if ($parameters->size() == 0)
+			return static::getAllNoParameters();
+		else
+			return static::getAllWithParameters($parameters);
 	}
 
-	/** Get All lines
+
+	/**
+	 * Get All lines
 	 *
 	 * @return string JSON
 	 */
 	private static function getAllNoParameters(): string {
-		$all = static::$service->getAll();
+		$all   = static::$service->getAll();
 		$array = [];
 		foreach ($all as $one) $array[] = $one->filter();
 		return json_encode($array);
 	}
 
-	/** Get All lines, filtered by parameters
+
+	/**
+	 * Get All lines, filtered by parameters
 	 *
 	 * @param KeyValueList $parameters
 	 *
 	 * @return string JSON
 	 */
 	private static function getAllWithParameters(KeyValueList $parameters): string {
-		$all = static::$service->getByFields($parameters);
+		$all   = static::$service->getByFields($parameters);
 		$array = [];
 		foreach ($all as $one) $array[] = $one->filter();
 		return json_encode($array);
 	}
 
 
-	/** Get a single line by ID
+	/**
+	 * Get a single line by ID
 	 *
 	 * @param string[] $params
 	 *
@@ -165,7 +183,9 @@ abstract class Controller {
 	 */
 	public static function getById(array $params): string { return static::$service->getById($params["id"])->toJSON(); }
 
-	/** Create a model
+
+	/**
+	 * Create a model
 	 *
 	 * @param string[] $params
 	 * @param stdClass $body
@@ -177,7 +197,9 @@ abstract class Controller {
 		return static::$service->create($model)->toJSON();
 	}
 
-	/** Update a model
+
+	/**
+	 * Update a model
 	 *
 	 * @param string[] $params
 	 * @param stdClass $body
@@ -189,7 +211,9 @@ abstract class Controller {
 		return static::$service->update($model)->toJSON();
 	}
 
-	/** Delete a model
+
+	/**
+	 * Delete a model
 	 *
 	 * @param string[] $params
 	 *

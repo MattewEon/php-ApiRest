@@ -19,7 +19,9 @@ class Rest {
 	/** @var string */
 	public static $uploadDir = "rest/uploads";
 
-	/** Check if $method is GET POST PUT DELETE
+
+	/**
+	 * Check if $method is GET POST PUT DELETE
 	 *
 	 * @param string $method
 	 *
@@ -29,7 +31,9 @@ class Rest {
 		return in_array(strtoupper($method), [Rest::GET, Rest::POST, Rest::PUT, Rest::DELETE]);
 	}
 
-	/** Connect with PDO
+
+	/**
+	 * Connect with PDO
 	 *
 	 * @param $host
 	 * @param $dbName
@@ -41,15 +45,19 @@ class Rest {
 		Rest::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 	}
 
-	/** Get the current User's id
+
+	/**
+	 * Get the current User's id
 	 *
 	 * @return Credentials
 	 */
-	public static function getTokenID() {
+	public static function getTokenID(): Credentials {
 		return self::tokenToID(self::getToken());
 	}
 
-	/** Get the id contained by the Token
+
+	/**
+	 * Get the id contained by the Token
 	 *
 	 * @param string $token
 	 *
@@ -61,7 +69,9 @@ class Rest {
 		return new Credentials($tokenArray->id, $tokenArray->role);
 	}
 
-	/** Get the token send via HTTP headers
+
+	/**
+	 * Get the token send via HTTP headers
 	 *
 	 * @return string token
 	 * @throws Exception
@@ -72,7 +82,9 @@ class Rest {
 		return $_SERVER["HTTP_TOKEN"];
 	}
 
-	/** Check if user is logged via HTTP Token
+
+	/**
+	 * Check if user is logged via HTTP Token
 	 *
 	 * @return bool
 	 */
@@ -80,7 +92,9 @@ class Rest {
 		return isset($_SERVER["HTTP_TOKEN"]);
 	}
 
-	/** Encode id to get the Token
+
+	/**
+	 * Encode id to get the Token
 	 *
 	 * @param $credentials Credentials
 	 *
@@ -90,7 +104,9 @@ class Rest {
 		return JWT::encode($credentials, self::$secretKey);
 	}
 
-	/** Set the uploadDir parameter
+
+	/**
+	 * Set the uploadDir parameter
 	 *
 	 * @param string $directory
 	 */
@@ -100,7 +116,9 @@ class Rest {
 		if (!is_dir(Rest::getUploadDir())) Rest::createDirectoryRecursive(Rest::$uploadDir);
 	}
 
-	/** Create a Directory Recursively
+
+	/**
+	 * Create a Directory Recursively
 	 *
 	 * @param string $directory
 	 */
@@ -112,11 +130,13 @@ class Rest {
 		}
 	}
 
-	/** Get the upload directory path
+
+	/**
+	 * Get the upload directory path
 	 *
 	 * @return string
 	 */
-	public static function getUploadDir() {
+	public static function getUploadDir(): string {
 		return __DIR__ . "/../../" . Rest::$uploadDir;
 	}
 
@@ -133,7 +153,8 @@ class Rest {
 	}
 
 
-	/** Upload a file to the uploadDir
+	/**
+	 * Upload a file to the uploadDir
 	 *
 	 * @param string $fileName
 	 * @param string $newFileName
@@ -151,7 +172,8 @@ class Rest {
 		return move_uploaded_file($tmp_name, Rest::getUploadDir() . "/" . $newFileName);
 	}
 
-	/** Change scale of a picture and save it in a new file
+	/**
+	 * Change scale of a picture and save it in a new file
 	 *
 	 * @param string $input  input file name
 	 * @param string $output output file name

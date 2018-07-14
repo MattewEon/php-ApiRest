@@ -10,10 +10,13 @@ class ApiUrl {
 	/** @var string Rest::GET POST PUT DELETE */
 	private $method;
 
-	/** ApiUrl constructor.
+
+	/**
+	 * ApiUrl constructor.
 	 *
 	 * @param string $method
 	 * @param string $url
+	 *
 	 * @throws Exception when Rest::method is not valid
 	 */
 	public function __construct(string $method, string $url) {
@@ -27,12 +30,13 @@ class ApiUrl {
 		else $this->url = explode("/", $url);
 	}
 
+
 	/**
 	 * Return the weight of the ApiUrl. For each parameters ($PARAMETER) the weight increase by one
 	 *
 	 * @return int
 	 */
-	public function getWeight() : int {
+	public function getWeight(): int {
 		$weight = 0;
 		foreach ($this->url as $value) {
 			if (substr($value, 0, 1) == '$') $weight++;
@@ -41,9 +45,12 @@ class ApiUrl {
 		return $weight;
 	}
 
-	/** Get parameters of url
+
+	/**
+	 * Get parameters of url
 	 *
 	 * @param ApiUrl $requestUrl
+	 *
 	 * @return array of parameters
 	 * @throws Exception
 	 */
@@ -54,15 +61,18 @@ class ApiUrl {
 		$result = [];
 		foreach ($this->url as $index => $value) {
 			if (substr($value, 0, 1) == '$')
-				$result[substr($value, 1)] = $requestUrl->url[$index];
+				$result[ substr($value, 1) ] = $requestUrl->url[ $index ];
 		}
 
 		return $result;
 	}
 
-	/** Check if an ApiUrl match with current ApiUrl
+
+	/**
+	 * Check if an ApiUrl match with current ApiUrl
 	 *
 	 * @param ApiUrl $requestUrl
+	 *
 	 * @return bool
 	 */
 	public function match(ApiUrl $requestUrl): bool {
@@ -73,9 +83,9 @@ class ApiUrl {
 			return false;
 
 		foreach ($this->url as $index => $value) {
-			if ($value == $requestUrl->url[$index])
+			if ($value == $requestUrl->url[ $index ])
 				continue;
-			if (substr($value, 0, 1) == '$' && isset($requestUrl->url[$index]))
+			if (substr($value, 0, 1) == '$' && isset($requestUrl->url[ $index ]))
 				continue;
 			else return false;
 		}
@@ -83,9 +93,12 @@ class ApiUrl {
 		return true;
 	}
 
-	/** Check if an ApiUrl match perfectly (weight included) with current ApiUrl
+
+	/**
+	 * Check if an ApiUrl match perfectly (weight included) with current ApiUrl
 	 *
 	 * @param ApiUrl $requestUrl
+	 *
 	 * @return bool
 	 */
 	public function perfectMatch(ApiUrl $requestUrl): bool {
@@ -96,9 +109,9 @@ class ApiUrl {
 			return false;
 
 		foreach ($this->url as $index => $value) {
-			if ($value == $requestUrl->url[$index])
+			if ($value == $requestUrl->url[ $index ])
 				continue;
-			if (substr($value, 0, 1) == '$' && substr($requestUrl->url[$index], 0, 1) == '$')
+			if (substr($value, 0, 1) == '$' && substr($requestUrl->url[ $index ], 0, 1) == '$')
 				continue;
 			else return false;
 		}

@@ -1,8 +1,7 @@
 <?php
 require_once __DIR__ . "/Rest.php";
 require_once __DIR__ . "/Controller.php";
-
-// Regex ? ([\d\w~+$_%\-()\[\],;?&=$_\.@])+
+require_once __DIR__ . "/ApiException.php";
 
 /** Main class of the Rest API
  *
@@ -10,9 +9,9 @@ require_once __DIR__ . "/Controller.php";
  */
 class RestAPI {
 
-	/** RestAPI constructor
-	 */
-	/** RestAPI constructor
+
+	/**
+	 * RestAPI constructor
 	 *
 	 * @param string      $host
 	 * @param string      $dbName
@@ -22,28 +21,41 @@ class RestAPI {
 	 */
 	public function __construct(string $host, string $dbName, string $userName, string $password, string $secretKey = null) {
 		Rest::MysqlConnect($host, $dbName, $userName, $password);
-		Rest::$secretKey = $secretKey == null ? "m*;rO)P7^)3'k[F'S~h0Lx7{zN%`6S": $secretKey;
+		Rest::$secretKey = $secretKey == null ? "m*;rO)P7^)3'k[F'S~h0Lx7{zN%`6S" : $secretKey;
 	}
 
-	/** Main function : handle the ApiUrl received
+
+	/**
+	 * Main function : handle the ApiUrl received
 	 *
 	 * @return string
 	 */
 	public function handleRequest(): string {
-		$request = explode('/', $this->getUrl());
+		$request    = explode('/', $this->getUrl());
 		$controller = $this->getController(array_shift($request));
-		return $controller->processUrl($this->getMethod(), join("/", $request), $this->getBody());
+		try {
+			return $controller->processUrl($this->getMethod(), join("/", $request), $this->getBody());
+		} catch (ApiException $exception) {
+			header("HTTP/1.1 409");
+			echo json_encode($exception);
+			exit();
+		}
 	}
 
-	/** Return the url called
+
+	/**
+	 * Return the url called
 	 *
 	 * @return string
 	 */
 	public function getUrl(): string { return trim($_SERVER['PATH_INFO'], '/'); }
 
-	/** Get the controller associated
+
+	/**
+	 * Get the controller associated
 	 *
 	 * @param string $className
+	 *
 	 * @return Controller
 	 * @throws Exception when controller don't exist
 	 */
@@ -57,13 +69,17 @@ class RestAPI {
 		return new $class($className);
 	}
 
-	/** Return the HTTP Request Method Rest GET / POST / PUT / DELETE
+
+	/**
+	 * Return the HTTP Request Method Rest GET / POST / PUT / DELETE
 	 *
 	 * @return string
 	 */
 	public function getMethod(): string { return $_SERVER['REQUEST_METHOD']; }
 
-	/** Return the HTTP body content
+
+	/**
+	 * Return the HTTP body content
 	 *
 	 * @return string
 	 */

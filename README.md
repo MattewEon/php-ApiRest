@@ -14,10 +14,15 @@ This repository contains a little framework capable of doing a RestAPI easily wi
     - [2.4 Repositories](#2.4)
     - [2.5 Model](#2.5)
     - [2.6 Guards](#2.6)
+    - [2.7 Exceptions](#2.7)
 - [3. Future improvements](#3)
 
 # Updates
 
+- 15 Jul. 2018
+    - Added exception feature
+        - Added `ApiException.php` class
+        - Updated `Rest::handleRequest` to return a HTTP 409 when exception is raised
 - 11 Jul. 2018
     - Added `Rest::existFile` function
 - 23 Jun. 2018
@@ -320,8 +325,35 @@ own guard too following the same rules, and then adding a new line in the `inclu
 Guards are called in the [Controllers](#2.2) classes, when you will declare the route. Note that a route can have 0, 1
 or multiple guards.
 
+## 2.7 <a name="2.7"></a> Exceptions
+
+Exception can be raised when there is an issue to be printed displayed in the front-end website. To do so, you have to
+throw an `ApiException` and the server will respond with a `HTTP 409` error.
+
+The `ApiException` class extends the `Exception` class, but it does not use parameters from the superclass.  
+This class is made in a way to easily use some internationalization Frondend tool: it's containing a `key` parameter
+which can be the key of the translation in the JSON file, and a `parameters` parameter which contain the data to be
+transmitted. For example, here is an ApiException and the associated JSON internationalization file :
+
+```php
+throw new ApiException("api-error.error1", ["name" => 'John']);
+```
+
+```json
+{
+  "api-error": {
+    "error1": {
+      "title": "Hey !",
+      "text": "Hello {{name}}"
+    }
+  }
+}
+```
+
+When using an ApiException, these data will be stored in the `error` property of the `HttpErrorResponse` JavaScript
+item.
+
+
 # 3. <a name="3"></a> Future improvements
 
-In the future, I would like to add some authorizations features to allow
-requesting specific paths only if the user is logged and has the appropriate
-role.
+No future improvements planned now. Doesn't mean that the package will not be updated !
