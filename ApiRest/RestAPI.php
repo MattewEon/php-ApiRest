@@ -60,11 +60,11 @@ class RestAPI {
 	 * @throws Exception when controller don't exist
 	 */
 	public function getController(string $className): Controller {
-		$controlerIncludeFile = __DIR__ . "/../$className/include.php";
-		if (!is_file($controlerIncludeFile))
-			throw new Exception("Controller include file '$controlerIncludeFile' not found");
+		$controllerIncludeFile = __DIR__ . "/../$className/include.php";
+		if (!is_file($controllerIncludeFile))
+			throw new Exception("Controller include file '$controllerIncludeFile' not found");
 
-		require_once $controlerIncludeFile;
+		require_once $controllerIncludeFile;
 		$class = $className . "Controller";
 		return new $class($className);
 	}
