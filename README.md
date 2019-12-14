@@ -19,6 +19,8 @@ This repository contains a little framework capable of doing a RestAPI easily wi
 
 # Updates
 
+- 15 Dec. 2019
+    - Improved route detection to use the one with less parameters
 - 15 Jul. 2018
     - Added exception feature
         - Added `ApiException.php` class

@@ -20,7 +20,7 @@ class UserRepository extends Repository {
 
 		$loggedUser = $matchedUsers[0];
 		if ($loggedUser)
-			return Rest::IDToToken($loggedUser->id);
+			return Rest::IDToToken(new Credentials($loggedUser->id, 0));
 		else
 			return "";
 	}

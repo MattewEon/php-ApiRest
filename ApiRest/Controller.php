@@ -51,10 +51,22 @@ abstract class Controller {
 		$apiUrl    = new ApiUrl($method, $url);
 		$data_body = $body == "" ? new stdClass() : json_decode($body);
 
+		/** @var ApiRoute $matchedRoute */
+		$matchedRoute = null;
 		foreach (static::$apiRoutes as $apiRoute) if ($apiRoute->match($apiUrl)) {
-			$apiRoute->checkGuards();
-			return $apiRoute->callFunction($apiUrl, $data_body);
+			if ($matchedRoute == null) {
+				// Found the first route, we take it
+				$matchedRoute = $apiRoute;
+			} else if ($matchedRoute->route->getWeight() > $apiRoute->route->getWeight()) {
+				// We found a route with less parameters, we take it instead
+				$matchedRoute = $apiRoute;
+			} else if ($matchedRoute->route->getWeight() == $apiRoute->route->getWeight()) {
+				throw new Exception("Route is not unique : '" . static::$modelName . "/$url' ");
+			}
 		}
+
+		$matchedRoute->checkGuards();
+		return $matchedRoute->callFunction($apiUrl, $data_body);
 
 		throw new Exception("URL '" . static::$modelName . "/$url' has no match");
 	}
