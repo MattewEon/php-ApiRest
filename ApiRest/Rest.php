@@ -89,7 +89,13 @@ class Rest {
 	 * @return bool
 	 */
 	public static function isLogged(): bool {
-		return isset($_SERVER["HTTP_TOKEN"]);
+		try {
+			JWT::decode($_SERVER["HTTP_TOKEN"], self::$secretKey);
+			return true;
+		} catch (Exception $e) {
+			var_dump($e);
+			return false;
+		}
 	}
 
 
