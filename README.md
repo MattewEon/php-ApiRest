@@ -19,6 +19,9 @@ This repository contains a little framework capable of doing a RestAPI easily wi
 
 # Updates
 
+- 21 Dec. 2019
+    - Added `PDOUtils` class
+    - Cleaned `Repository` class in order to use `PDOUtils`
 - 19 Dec. 2019
     - Updated isLogged function to check the token validity
 - 15 Dec. 2019
@@ -295,6 +298,22 @@ class UserRepository extends Repository {
 }
 ```
 
+If you want to use custom SQL queries, you can use PDOUtils class in order
+to execute them. Here is an example :
+```php
+$query = "< CUSTOM_SELECT_QUERY >";
+$PDOStatement = PDOUtils::executeQuery($query);
+return static::getByPDOStatement($PDOStatement);
+```
+
+There some functions you can use from `PDOUtils` :
+- `executeQuery(query)`
+    - Execute a SQL query
+- `executeQueryWithParameter(query, keyValue)`
+    - Execute a SQL query with one parameter
+- `executeQueryWithParameters(query, KeyValueList)`
+    - Execute a SQL query with several parameters
+
 ## 2.5 <a name="2.5"></a> Model
 
 Models are the classes representing a line in the DataBase. 
@@ -360,4 +379,5 @@ item.
 
 # 3. <a name="3"></a> Future improvements
 
-No future improvements planned now. Doesn't mean that the package will not be updated !
+Add the capacity of forcing the type of each Model's field
+Otherwise, No future improvements planned now. Doesn't mean that the package will not be updated !

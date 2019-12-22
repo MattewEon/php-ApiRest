@@ -1,106 +1,97 @@
 <?php
 
-/** Structure class representing a list of KeyValue items
- *
- * @author Mathieu Gallo <gallo.mathieu@outlook.fr>
- */
-class KeyValueList {
-	/** @var KeyValue[] List of values */
-	public $values;
-
-
+class PDOUtils {
 	/**
-	 * KeyValueList constructor.
+	 * Execute a Sql Query
 	 *
-	 * @param KeyValue[] $values
+	 * @param string $query the query to execute
+	 *
+	 * @return PDOStatement
 	 */
-	function __construct(array $values = []) {
-		$this->values = $values;
-	}
-
-
-	/**
-	 * Get KeyValue by $index
-	 *
-	 * @param number $index
-	 *
-	 * @return KeyValue
-	 */
-	public function get(number $index): KeyValue {
-		return $this->values[ $index ];
-	}
-
-
-	/**
-	 * Get all keys
-	 *
-	 * @return string[]
-	 */
-	public function getKeys(): array {
-		$result = [];
-		foreach ($this->values as $value)
-			$result[] = $value->key;
-
-		return $result;
-	}
-
-
-	/**
-	 * Add a KeyValue to the list
-	 *
-	 * @param KeyValue $element
-	 *
-	 * @return KeyValueList Equals $this
-	 */
-	public function add(KeyValue $element): KeyValueList {
-		$index = $this->getKeyIndex($element->key);
-
-		if ($index == -1)
-			$this->values[] = $element;
-		else
-			$this->values[ $index ] = $element;
-
-		return $this;
-	}
-
-
-	/**
-	 * Get the index of the $key
-	 *
-	 * @param string $key
-	 *
-	 * @return int
-	 */
-	public function getKeyIndex(string $key): int {
-		foreach ($this->values as $index => $value)
-			if ($value->key == $key)
-				return $index;
-
-		return -1;
+	public static function executeQuery(string $query): PDOStatement {
+		$PDOStatement = Rest::$db->prepare($query);
+		$PDOStatement->execute();
+		return $PDOStatement;
 	}
 
 	/**
-	 * Check if a key exists
+	 * Execute a Sql Query with one parameter
 	 *
-	 * @param string $key
+	 * @param string   $query the query to execute
+	 * @param KeyValue $field the parameter to bind
 	 *
-	 * @return bool
+	 * @return PDOStatement
 	 */
-	public function keyExist(string $key): bool {
-		foreach ($this->values as $value)
-			if ($value->key == $key)
-				return true;
-
-		return false;
+	public static function executeQueryWithParameter(string $query, KeyValue $field): PDOStatement {
+		$PDOStatement = Rest::$db->prepare($query);
+		$PDOStatement->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
+		$PDOStatement->execute();
+		return $PDOStatement;
 	}
 
+	/**
+	 * Execute a Sql Query with parameters
+	 *
+	 * @param string       $query  the query to execute
+	 * @param KeyValueList $fields parameters to bind
+	 *
+	 * @return PDOStatement
+	 */
+	public static function executeQueryWithParameters(string $query, KeyValueList $fields): PDOStatement {
+		$PDOStatement = Rest::$db->prepare($query);
+		foreach ($fields->values as $field) {
+			$PDOStatement->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
+		}
+		$PDOStatement->execute();
+		return $PDOStatement;
+	}
 
 	/**
-	 * Get the size of the list
+	 * Get by a PDO Statement
 	 *
-	 * @return int
+	 * @param PDOStatement $PDOStatement The sql query
+	 *
+	 * @return array Results of the query
 	 */
-	public function size(): int {
-		return count($this->values);
+	public static function getByQuery(PDOStatement $PDOStatement): array {
+		$results = [];
+		foreach ($PDOStatement->fetchAll() as $row) {
+			$results[] = $row;
+		}
+
+
+		return $results;
+	}
+
+	/**
+	 * Get by a PDO Statement
+	 *
+	 * @param PDOStatement $PDOStatement The sql query
+	 * @param string       $modelName    The name of the PHP Model class to use
+	 *
+	 * @return Model[] Results of the query
+	 */
+	public static function getModelByQuery(PDOStatement $PDOStatement, string $modelName): array {
+		$modelArray = [];
+		foreach ($PDOStatement->fetchAll(PDO::FETCH_CLASS, $modelName) as $row) {
+			$modelArray[] = $row;
+		}
+
+		foreach ($modelArray as $model) $model->preserveBooleans();
+
+		return $modelArray;
+	}
+
+	/**
+	 * Get the PDO param constant
+	 *
+	 * @param mixed $value to evaluate
+	 *
+	 * @return int PDO::PARAM
+	 */
+	public static function getPdoParam($value): int {
+		if (is_bool($value)) return PDO::PARAM_BOOL;
+		if (is_numeric($value) && $value < pow(2, 31)) return PDO::PARAM_INT;
+		return PDO::PARAM_STR;
 	}
 }

@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . "/Rest.php";
+require_once __DIR__ . "/PDOUtils.php";
 
-/** Repository class are representing SQL tables
+/**
+ * Repository class are representing SQL tables
  *
  * @author Mathieu Gallo <gallo.mathieu@outlook.fr>
  */
@@ -17,7 +19,8 @@ class Repository {
 	public $modelName;
 
 
-	/** TableHandler constructor
+	/**
+	 * TableHandler constructor
 	 *
 	 * @param string $tableName
 	 * @param string $modelName
@@ -37,9 +40,9 @@ class Repository {
 
 		$this->idKey = $keys[0];
 		unset($keys[0]);
-		foreach(array_keys($keys) as $i) {
-			if ($model->isDbIgnore($keys[$i])) {
-				unset($keys[$i]);
+		foreach (array_keys($keys) as $i) {
+			if ($model->isDbIgnore($keys[ $i ])) {
+				unset($keys[ $i ]);
 			}
 		}
 		$this->properties = $keys;
@@ -59,8 +62,18 @@ class Repository {
 		return $last + 1;
 	}
 
+	/**
+	 * @param PDOStatement $PDOStatement
+	 *
+	 * @return Model[]
+	 */
+	public function getByPDOStatement(PDOStatement $PDOStatement) {
+		return PDOUtils::getModelByQuery($PDOStatement, $this->modelName);
+	}
 
-	/** Get the GetAll query
+
+	/**
+	 * Get the GetAll query
 	 *
 	 * @return string
 	 */
@@ -68,22 +81,19 @@ class Repository {
 		return "SELECT * FROM $this->tableName";
 	}
 
-	/** Get all lines
+	/**
+	 * Get all lines
 	 *
 	 * @return Model[]
 	 */
 	public function getAll(): array {
-		$modelArray = [];
-		foreach (Rest::$db->query($this->getGetAllQuery())->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row) {
-			$modelArray[] = $row;
-		}
-		foreach ($modelArray as $model) $model->preserveBooleans();
-
-		return $modelArray;
+		$PDOStatement = PDOUtils::executeQuery($this->getGetAllQuery());
+		return $this->getByPDOStatement($PDOStatement);
 	}
 
 
-	/** Get the GetById query
+	/**
+	 * Get the GetById query
 	 *
 	 * @return string
 	 */
@@ -91,25 +101,25 @@ class Repository {
 		return $this->getGetByFieldQuery($this->idKey);
 	}
 
-	/** Get a single line by ID
+	/**
+	 * Get a single line by ID
 	 *
 	 * @param mixed $id
 	 *
 	 * @return Model
 	 */
 	public function getByID($id): Model {
-		$stmt = Rest::$db->prepare($this->getGetByIDQuery());
-		$stmt->bindValue(":$this->idKey", $id, self::getPdoParam($id));
-		$stmt->execute();
-		$model = $stmt->fetchObject($this->modelName);
+		$PDOStatement = PDOUtils::executeQueryWithParameter($this->getGetByIDQuery(), new KeyValue($this->idKey, $id));
 
+		$model = $PDOStatement->fetchObject($this->modelName);
 		$model->preserveBooleans();
 
 		return $model;
 	}
 
 
-	/** Get the GetByField query
+	/**
+	 * Get the GetByField query
 	 *
 	 * @param string $field
 	 *
@@ -119,28 +129,21 @@ class Repository {
 		return "SELECT * FROM $this->tableName WHERE $field = :$field";
 	}
 
-	/** Get a single line by $field
+	/**
+	 * Get a single line by $field
 	 *
 	 * @param KeyValue $field
 	 *
 	 * @return Model[]
-	 * @throws Exception
 	 */
 	public function getByField(KeyValue $field): array {
-		$stmt = Rest::$db->prepare($this->getGetByFieldQuery($field->key));
-		$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
-		$stmt->execute();
-
-		$modelArray = [];
-		foreach ($stmt->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row) $modelArray[] = $row;
-
-		foreach ($modelArray as $model) $model->preserveBooleans();
-
-		return $modelArray;
+		$PDOStatement = PDOUtils::executeQueryWithParameter($this->getGetByFieldQuery($field->key), $field);
+		return $this->getByPDOStatement($PDOStatement);
 	}
 
 
-	/** Get the GetByFields query
+	/**
+	 * Get the GetByFields query
 	 *
 	 * @param string[] $fields
 	 *
@@ -150,47 +153,41 @@ class Repository {
 		return "SELECT * FROM $this->tableName WHERE " . self::fieldsToQuery($fields);
 	}
 
-	/** Get a single line by ID
+	/**
+	 * Get a single line by ID
 	 *
 	 * @param KeyValueList $fields
 	 *
 	 * @return Model[]
 	 */
 	public function getByFields(KeyValueList $fields): array {
-		$stmt = Rest::$db->prepare($this->getGetByFieldsQuery($fields->getKeys()));
-		foreach ($fields->values as $field) {
-			$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
-		}
-		$stmt->execute();
-
-		$modelArray = [];
-		foreach ($stmt->fetchAll(PDO::FETCH_CLASS, $this->modelName) as $row) $modelArray[] = $row;
-
-		foreach ($modelArray as $model) $model->preserveBooleans();
-
-		return $modelArray;
+		$PDOStatement = PDOUtils::executeQueryWithParameters($this->getGetByFieldsQuery($fields->getKeys()), $fields);
+		return $this->getByPDOStatement($PDOStatement);
 	}
 
 
-	/** Get the Create query
+	/**
+	 * Get the Create query
 	 *
 	 * @return string
 	 */
 	public function getCreateQuery(): string {
 		$columns = join(", ", $this->properties);
-		$keys = ":" . join(", :", $this->properties);
+		$keys    = ":" . join(", :", $this->properties);
 
 		return "INSERT INTO $this->tableName ($this->idKey, $columns) VALUES (:$this->idKey, $keys)";
 	}
 
-	/** Create a model
+	/**
+	 * Create a model
 	 *
 	 * @param Model $model
 	 *
 	 * @return Model
+	 * @throws Exception
 	 */
 	public function create(Model $model): Model {
-		$id = $this->getNewID();
+		$id                    = $this->getNewID();
 		$model->{$this->idKey} = $id;
 
 		$stmt = Rest::$db->prepare($this->getCreateQuery());
@@ -220,6 +217,7 @@ class Repository {
 	 * @param Model $model
 	 *
 	 * @return Model
+	 * @throws Exception
 	 */
 	public function update(Model $model): Model {
 		$stmt = Rest::$db->prepare($this->getUpdateQuery());
@@ -230,22 +228,13 @@ class Repository {
 	}
 
 
-	/** Get the Delete query
-	 *
-	 * @return string
-	 */
-	public function getDeleteQuery(): string {
-		return "DELETE FROM $this->tableName WHERE $this->idKey = :$this->idKey";
-	}
-
 	/** Delete a model
 	 *
 	 * @param $id
 	 */
 	public function delete($id) {
-		$stmt = Rest::$db->prepare($this->getDeleteQuery());
-		$stmt->bindValue(":$this->idKey", $id, self::getPdoParam($id));
-		$stmt->execute();
+		$field = new KeyValue($this->idKey, $id);
+		PDOUtils::executeQueryWithParameter($this->getDeleteByFieldQuery($field), $field);
 	}
 
 
@@ -259,15 +248,13 @@ class Repository {
 		return "DELETE FROM $this->tableName WHERE $field = :$field";
 	}
 
-	/** Delete models by field
+	/**
+	 * Delete models by field
 	 *
 	 * @param KeyValue $field
 	 */
 	public function deleteByField(KeyValue $field) {
-		$stmt = Rest::$db->prepare($this->getDeleteByFieldQuery($field->key));
-		$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
-
-		$stmt->execute();
+		PDOUtils::executeQueryWithParameter($this->getDeleteByFieldQuery($field), $field);
 	}
 
 
@@ -281,32 +268,17 @@ class Repository {
 		return "DELETE FROM $this->tableName WHERE " . self::fieldsToQuery($fields->getKeys());
 	}
 
-	/** Delete models by fields
+	/**
+	 * Delete models by fields
 	 *
 	 * @param KeyValueList $fields
 	 */
 	public function deleteByFields(KeyValueList $fields) {
-		$stmt = Rest::$db->prepare($this->getDeleteByFieldsQuery($fields));
-		foreach ($fields->values as $field) {
-			$stmt->bindValue(":$field->key", $field->value, self::getPdoParam($field->value));
-		}
-		$stmt->execute();
+		PDOUtils::executeQueryWithParameters($this->getDeleteByFieldsQuery($fields), $fields);
 	}
 
-
-	/** Get the PDO param constant
-	 *
-	 * @param mixed $value to evaluate
-	 *
-	 * @return int PDO::PARAM
-	 */
-	public static function getPdoParam($value): int {
-		if (is_bool($value)) return PDO::PARAM_BOOL;
-		if (is_numeric($value)) return PDO::PARAM_INT;
-		return PDO::PARAM_STR;
-	}
-
-	/** Transform a array of parameter names into a SQL string
+	/**
+	 * Transform a array of parameter names into a SQL string
 	 *    example : ("propA", "propB") => "propA = :propA AND propB = :propB"
 	 *
 	 * @param array $fields
@@ -319,7 +291,8 @@ class Repository {
 		return join(" AND ", $fieldsStrArray);
 	}
 
-	/** Bind Model's attributes to the statement
+	/**
+	 * Bind Model's attributes to the statement
 	 *
 	 * @param Model        $model
 	 * @param PDOStatement $stmt
@@ -331,7 +304,7 @@ class Repository {
 
 		foreach ($model as $key => $value) {
 			if (!$model->isDbIgnore($key))
-				$stmt->bindValue(":" . $key, $value, self::getPdoParam($value));
+				$stmt->bindValue(":" . $key, $value, PDOUtils::getPdoParam($value));
 		}
 	}
 }
