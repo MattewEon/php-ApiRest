@@ -234,7 +234,7 @@ class Repository {
 	 */
 	public function delete($id) {
 		$field = new KeyValue($this->idKey, $id);
-		PDOUtils::executeQueryWithParameter($this->getDeleteByFieldQuery($field), $field);
+		PDOUtils::executeQueryWithParameter($this->getDeleteByFieldQuery($this->idKey), $field);
 	}
 
 
